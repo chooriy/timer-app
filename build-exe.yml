@@ -1,0 +1,50 @@
+name: Build EXE (PyInstaller)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    # اگر خواستی فقط با تغییر app.py اجرا شود این دو خط را باز بگذار:
+    # paths:
+    #   - app.py
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show workspace + files (debug)
+        run: |
+          Write-Host "CWD =" (Get-Location)
+          Write-Host "Listing root:"
+          Get-ChildItem -Force | Format-List -Property Name,Length,Mode
+          if (-not (Test-Path ".\app.py")) {
+            Write-Host "app.py NOT found in root. Full tree:"
+            Get-ChildItem -Recurse -Force | Select-Object FullName | Out-String | Write-Host
+            throw "app.py missing in $PWD"
+          }
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyInstaller
+        run: pip install --upgrade pip pyinstaller
+
+      # اگر فایل شما اسم دیگری دارد، بجای app.py همان را بنویسید
+      - name: Build one-file exe
+        shell: cmd
+        run: pyinstaller --onefile --noconsole --name MyBlinker ".\app.py"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyBlinker-exe
+          path: dist/MyBlinker.exe
