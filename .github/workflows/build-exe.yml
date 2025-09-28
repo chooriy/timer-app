@@ -1,0 +1,25 @@
+name: Build EXE (PyInstaller)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - app.py
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+      - name: Build one-file exe
+        run: pyinstaller --onefile --noconsole --name MyBlinker app.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyBlinker-exe
+          path: dist/MyBlinker.exe
